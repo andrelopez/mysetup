@@ -7,6 +7,8 @@ Of course this is *my* setup and is for most app just a matter of taste, see it 
 
 All software listed are free, unless I write otherwise.
 
+This setup was done on Mac OS X Lion.
+
 ## Not mandatory, still useful.
 
 It's not really specific for web development, but still here is some useful apps I use for a productivity boost. The motto here is "SYNC ALL THE DEVICES", I need to have all my data synched between my two macs and my phone.
@@ -33,6 +35,11 @@ Once homebrew and Xcode Command Line Tools are installed it might be a good idea
 If you want to install git, you can do it with brew.
 
 `brew install git`
+
+Setup your config :
+
+	git config --global user.name "Your Name"
+	git config --global user.email "your.mail@gmail.com"
 
 Need some aliases ?
 
@@ -126,31 +133,86 @@ And paste this :
 
 Now you've got branch name and dirty state right in your prompt, plus the return code if something went wrong !
 
-## Install a PHP 5.4 environment with Vagrant
 
-Although you can absolutely install a fully functional PHP environment with Homebrew, the [Vagrant](http://www.vagrantup.com) approach is a bit more versatile and I think you should give it a try.
+## Install a PHP 5.4 environment with Homebrew
+	
+Brew works with *formulas*, config files telling brew what and where get stuff. For PHP look at [homebrew-php on GitHub](https://raw.github.com/josegonzalez/homebrew-php) (branch moar-php for 5.4), that has a pretty decent amount of formulas just for PHP.
 
-Vagrant allows you to virtualize your development environment, this as several advantages :
+Now, to install PHP 5.4, with apache and mysql, just hit :
 
-* You can have as many different environment you need on your projects.
-* You can reuse environments on different projects, and share them with your team members.
-* Your local environment can be the same as your production environment.
+`brew install https://raw.github.com/josegonzalez/homebrew-php/moar-php/php54/php54.rb --with-mysql --with-intl`
 
-First you will need to [download VirtualBox](https://www.virtualbox.org/wiki/Downloads).
+### PHP setup
 
-Then [download Vagrant](http://downloads.vagrantup.com/).
+Isn't it done already ? Let's check.
 
-Once the two software are installed, we will try it in a dummy project.
+`php -v`
 
-	mkdir dummy && cd dummy
-	vagrant box add lucid32 http://files.vagrantup.com/lucid32.box
-	vaguant init lucid32
-	vagrant up
+Should display :
 
+	PHP 5.3.8 with Suhosin-Patch (cli) (built: Nov 15 2011 15:33:15) 
+	Copyright (c) 1997-2011 The PHP Group
+	Zend Engine v2.3.0, Copyright (c) 1998-2011 Zend Technologies
+	
+Wait, what ? This is not the PHP we're looking for !
+
+If you `brew doctor`, brew will tell you there's something wrong in your path :
+
+* `/usr/local/mysql/bin/`should not end with a slash.
+* `/usr/local/bin` should be before `/usr/bin`.
+
+The command `echo $PATH` should print something like that : 
+
+`/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/mysql/bin/:/Users/gabriel/bin`
+
+Just adjust your PATH with brew's suggestions
+
+`export PATH = /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/X11/bin:/usr/local/mysql/bin:/Users/gabriel/bin`
+
+Now `php -v` will hopefully output :
+
+	PHP 5.4.0 (cli) (built: May  7 2012 22:15:56) 
+	Copyright (c) 1997-2012 The PHP Group
+	Zend Engine v2.4.0, Copyright (c) 1998-2012 Zend Technologies
+	
+If you nee to tweak you configuration, you can edit `/usr/local/etc/php.ini`.
+
+As a reminder for me, for a Symfony2 dev environment you need to specify :
+
+	date.timezone = Europe/Paris
+	
+### Mysql setup
+
+If ever you got something like this while hitting `mysql.server start`:
+
+	Starting MySQL
+	.. ERROR! The server quit without updating PID file (/usr/local/var/mysql/new-host-2.home.pid).
+	
+Try `brew info mysql` and follow procedure.
+
+I also had a problem with the socket which was resolved with a `sudo ln -s /tmp/mysql.sock /var/mysql/mysql.sock`.
+	
+### Apache setup
+
+First, if you need to edit apache configuration file, you need to add write access, even if you're root.
+
+	sudo chmod +w /etc/apache2/httpd.conf
+	
+If you want to set up another DocumentRoot you have to change the second occurrence in the file.
+
+For php support you must add :
+
+	LoadModule php5_module    /usr/local/Cellar/php54/5.4.0/libexec/apache2/libphp5.so
+
+In case you're wondering, your VHOSTs can be set in `/private/etc/apache2/extra/httpd-vhosts.conf`.
+
+But remember to include the file in `httpd.conf` :
+
+	Include /private/etc/apache2/extra/httpd-vhosts.conf
 
 ## Development tools
 
-This is were it starts to be fun. Here are my tools for web development (PHP, Html, JS, CSS, MySQL).
+This is were it starts to be fun. Here is my selection of tools for coding stuff (PHP, Html, JS, CSS, MySQL).
  
 * [PHPStorm](http://www.jetbrains.com/phpstorm/) : I've used it a lot last year and it is the most complete editor I've known for web development. It is updated really often. The counterpart is that it can be damn slow on big projects, and can eat all your memory on code introspection (*94€*). 
 * [SublimeText 2](http://www.sublimetext.com/2) : I'm forcing myself to use it even for PHP code writing, it's free (*or $59 to get rid of annoying popup while saving*), really light and straight to the point. The only thing I miss is a good PHP autocompletion, although you can have something decent with packages (see bellow) it does not get close to PHPStorm.
